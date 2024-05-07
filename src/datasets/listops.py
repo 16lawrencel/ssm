@@ -29,8 +29,9 @@ class ListopsDataset(Dataset):
             data = [line.split("\t") for line in f.readlines()]
 
             self.inputs: list[str] = [row[0] for row in data]
-            self.outputs: list[int] = [int(row[1]) for row in data]
+            self.outputs: list[float] = [float(row[1]) for row in data]
 
+        # TODO: remove this once we get initial test working
         self.inputs = self.inputs[:5]
         self.outputs = self.outputs[:5]
 
@@ -46,6 +47,6 @@ class ListopsDataset(Dataset):
             [self.vocab_idx_map[word] for word in s.split()], dtype=torch.int64
         )
 
-    def __getitem__(self, idx: int) -> tuple[Tensor, int]:
+    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor]:
         inp_onehot = self._convert_str_to_tensor(self.inputs[idx])
-        return inp_onehot, self.outputs[idx]
+        return inp_onehot, torch.tensor(self.outputs[idx], dtype=torch.float32)
