@@ -25,9 +25,13 @@ class SequenceModule(L.LightningModule):
 
     def validation_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> None:
         x, x_lengths, y = batch
-        pred = self(x, x_lengths)
-        loss = self.metric(pred, y)
+        pred_logits = self(x, x_lengths)
+        loss = self.metric(pred_logits, y)
         self.log("val_loss", loss)
+
+        preds = torch.argmax(pred_logits, dim=-1)
+        accuracy = (preds == y).sum() / len(y)
+        self.log("val_acc", accuracy)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=1e-3)
