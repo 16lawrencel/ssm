@@ -84,8 +84,10 @@ class DSSSoftmaxKernel(nn.Module):
         lmbda = torch.complex(self.lambda_re, self.lambda_im)
         delta = torch.exp(self.log_delta).unsqueeze(-1)
 
-        P_left = (delta * lmbda).view(self.h, self.n, 1)
-        P_right = torch.arange(0, L, 1).expand(self.h, 1, L).to(torch.complex64)
+        P_left = (delta * lmbda).view(self.h, self.n, 1).to(u.device)
+        P_right = (
+            torch.arange(0, L, 1).expand(self.h, 1, L).to(torch.complex64).to(u.device)
+        )
         P = P_left @ P_right
         assert P.shape == (self.h, self.n, L)
 
