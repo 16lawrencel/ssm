@@ -1,3 +1,4 @@
+import torch
 import hydra
 import lightning as L
 import rootutils
@@ -69,6 +70,7 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
 
     if cfg.get("train"):
         log.info("Starting training!")
+        torch.set_float32_matmul_precision("medium")
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
 
     train_metrics = trainer.callback_metrics
