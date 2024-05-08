@@ -73,7 +73,7 @@ class ListopsDataModule(L.LightningDataModule):
         self.listops_test = ListopsDataset(self.listops_dir / "basic_test.tsv")
 
     def train_dataloader(self):
-        return DataLoader(self.listops_train, batch_size=self.batch_size)
+        return DataLoader(self.listops_train, batch_size=self.batch_size, shuffle=True)
 
     def val_dataloader(self):
         return DataLoader(self.listops_val, batch_size=self.batch_size)
