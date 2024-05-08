@@ -1,3 +1,4 @@
 _target_: src.datasets.listops.ListopsDataModule
-data_dir: ${paths.data_dir}/lra_release/listops-1000
+data_dir: ${paths.data_dir}
 batch_size: 64
+download: True
