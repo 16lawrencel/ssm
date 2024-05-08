@@ -1,7 +1,8 @@
 import torch
 from torch import Tensor
 import torch.nn.functional as F
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
+import lightning as L
 
 from pathlib import Path
 
@@ -18,12 +19,12 @@ LISTOPS_VOCAB: list[str] = list("0123456789") + [
 
 
 class ListopsDataset(Dataset):
-    def __init__(self, listops_path: Path, max_length: int = 6000):
+    def __init__(self, data_dir: Path):
         self.vocab_idx_map = {
             LISTOPS_VOCAB[idx]: idx for idx in range(len(LISTOPS_VOCAB))
         }
 
-        with listops_path.open("r") as f:
+        with data_dir.open("r") as f:
             _header = f.readline()
             data = [line.split("\t") for line in f.readlines()]
 
@@ -51,3 +52,25 @@ class ListopsDataset(Dataset):
         # Returns: inp, inp_length, output
         inp, inp_length = self._convert_str_to_tensor(self.inputs[idx])
         return inp, inp_length, self.outputs[idx]
+
+
+class ListopsDataModule(L.LightningDataModule):
+    def __init__(self, data_dir: str, batch_size: int):
+        super().__init__()
+
+        self.data_dir = Path(data_dir)
+        self.batch_size = batch_size
+
+    def setup(self, stage: str):
+        self.listops_train = ListopsDataset(self.data_dir / "basic_train.tsv")
+        self.listops_val = ListopsDataset(self.data_dir / "basic_val.tsv")
+        self.listops_test = ListopsDataset(self.data_dir / "basic_test.tsv")
+
+    def train_dataloader(self):
+        return DataLoader(self.listops_train, batch_size=self.batch_size)
+
+    def val_dataloader(self):
+        return DataLoader(self.listops_val, batch_size=self.batch_size)
+
+    def test_dataloader(self):
+        return DataLoader(self.listops_test, batch_size=self.batch_size)

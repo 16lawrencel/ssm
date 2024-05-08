@@ -1,0 +1,9 @@
+_target_: src.models.sequence_module.SequenceModule
+
+net:
+  _target_: src.models.s4.S4
+  depth: 6
+  n: 64
+  h: 128
+  vocab_size: 17
+  out_size: 10
