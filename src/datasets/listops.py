@@ -18,8 +18,7 @@ LISTOPS_VOCAB: list[str] = list("0123456789") + [
 
 
 class ListopsDataset(Dataset):
-    def __init__(self, listops_path: Path):
-
+    def __init__(self, listops_path: Path, max_length: int = 6000):
         self.vocab_idx_map = {
             LISTOPS_VOCAB[idx]: idx for idx in range(len(LISTOPS_VOCAB))
         }
@@ -29,11 +28,9 @@ class ListopsDataset(Dataset):
             data = [line.split("\t") for line in f.readlines()]
 
             self.inputs: list[str] = [row[0] for row in data]
-            self.outputs: list[float] = [float(row[1]) for row in data]
+            self.outputs: list[int] = [int(row[1]) for row in data]
 
-        # TODO: remove this once we get initial test working
-        self.inputs = self.inputs[:5]
-        self.outputs = self.outputs[:5]
+        self.max_length = max(len(s.split()) for s in self.inputs)
 
     @property
     def vocab_size(self):
@@ -42,11 +39,15 @@ class ListopsDataset(Dataset):
     def __len__(self):
         return len(self.inputs)
 
-    def _convert_str_to_tensor(self, s: str) -> Tensor:
-        return torch.tensor(
+    def _convert_str_to_tensor(self, s: str) -> tuple[Tensor, int]:
+        tensor = torch.tensor(
             [self.vocab_idx_map[word] for word in s.split()], dtype=torch.int64
         )
+        length = len(tensor)
+        padded_tensor = F.pad(tensor, (0, self.max_length - length), "constant", 0)
+        return padded_tensor, length
 
-    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor]:
-        inp_onehot = self._convert_str_to_tensor(self.inputs[idx])
-        return inp_onehot, torch.tensor(self.outputs[idx], dtype=torch.float32)
+    def __getitem__(self, idx: int) -> tuple[Tensor, int, int]:
+        # Returns: inp, inp_length, output
+        inp, inp_length = self._convert_str_to_tensor(self.inputs[idx])
+        return inp, inp_length, self.outputs[idx]

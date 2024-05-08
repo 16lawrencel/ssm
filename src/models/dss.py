@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import nn, Tensor
 import torch.nn.functional as F
+from einops import rearrange
 
 
 class DSSSoftmaxKernel(nn.Module):
@@ -72,14 +73,13 @@ class DSSSoftmaxKernel(nn.Module):
         return res
 
     def forward(self, u: Tensor) -> Tensor:
-        # TODO: figure out batching
-        # u: (H x L)
+        # u: (B, L, H)
 
-        u = u.permute(1, 0)
+        assert len(u.shape) == 3
+        B, L, _ = u.shape
+        assert u.shape[2] == self.h
 
-        assert len(u.shape) == 2
-        assert u.shape[0] == self.h
-        L = u.shape[1]
+        u = rearrange(u, "b l h -> b h l")
 
         lmbda = torch.complex(self.lambda_re, self.lambda_im)
         delta = torch.exp(self.log_delta).unsqueeze(-1)
@@ -97,7 +97,9 @@ class DSSSoftmaxKernel(nn.Module):
         assert K_bar.shape == (self.h, 1, L)
 
         res = self._convolve(K_bar.squeeze(), u)
-        return res.permute(1, 0)
+        assert res.shape == (B, self.h, L)
+
+        return rearrange(res, "b h l -> b l h")
 
 
 class DSSLayer(nn.Module):
@@ -108,7 +110,7 @@ class DSSLayer(nn.Module):
         self.proj = nn.Linear(h, h)
 
     def forward(self, x: Tensor) -> Tensor:
-        # x: (H x L)
+        # x: (B, L, H)
         x = x + self.kernel(x)
         x = self.proj(F.gelu(x))
         return x
