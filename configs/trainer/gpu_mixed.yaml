@@ -1,5 +1,0 @@
-# Uses bf16 mixed precision for speedup
-defaults:
-  - gpu
-
-precision: bf16

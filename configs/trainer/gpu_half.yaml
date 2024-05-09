@@ -1,0 +1,5 @@
+# Uses half precision to be faster
+defaults:
+  - gpu
+
+precision: 16
